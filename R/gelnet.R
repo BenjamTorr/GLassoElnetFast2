@@ -2,7 +2,8 @@
 #'
 #' Estimates a sparse precision matrix Theta and the corresponding covariance matrix W using an elastic net type penalty.
 #' @param S Sample covariance matrix: symmetric p x p matrix
-#' @param lambda  Penalization parameter: non-negative scalar, symmetric p x p matrix or p-length vector. In the latter case, the penalty matrix has ij-th element sqrt(lambda[i]*lambda[j])
+#' @param lambdaLasso  Lasso Penalization parameter: non-negative scalar, symmetric p x p matrix or p-length vector. In the latter case, the penalty matrix has ij-th element sqrt(lambda[i]*lambda[j])
+#' @param lambdaRidge  Ridge Penalization parameter: non-negative scalar, symmetric p x p matrix or p-length vector. In the latter case, the penalty matrix has ij-th element sqrt(lambda[i]*lambda[j])
 #' @param alpha Tuning paremeter: scalar value between 0 and 1. 0 corresponds to ridge (L2) type penalty and 1 corresponds to lasso (L1) type penalty. Values inbetween lead to elastic net type penalties.
 #' @param zero (Optional) Indices of entries of precision matrix to be constrained to be zero. The input should be a matrix with two columns, each row indicating the indices of elements to be constrained to be zero. The solution must be symmetric, so you need only specify one of (i,j) and (j,i). An entry in the zero matrix overrides any entry in the rho matrix for a given element.
 #' @param Theta (Optional) Precision matrix warm start: symmetric positive definit p x p matrix used as a warm start. If Theta is too far from the correct solution, the algorithm may no converge.
@@ -38,7 +39,7 @@
 #' @useDynLib GLassoElnetFast
 
 
-gelnet <-function(S,lambda,alpha,zero=NULL,Theta=NULL,W=NULL,Target=NULL,outer.maxit=1000,outer.thr=1e-5,inner.maxit=1000,inner.thr=outer.thr,penalize.diagonal=TRUE,active=FALSE){
+gelnet <-function(S,lambdaLasso, lambdaRidge, alpha,zero=NULL,Theta=NULL,W=NULL,Target=NULL,outer.maxit=1000,outer.thr=1e-5,inner.maxit=1000,inner.thr=outer.thr,penalize.diagonal=TRUE,active=FALSE){
 
   BIG <- 10e9
 
@@ -47,11 +48,19 @@ gelnet <-function(S,lambda,alpha,zero=NULL,Theta=NULL,W=NULL,Target=NULL,outer.m
   #check1<-(nrow(S)==ncol(S))&&(S==t(S));
   #if (check1==0) { print("S should be square and symmetric"); return(); }
 
-  if(!is.matrix(lambda) & length(lambda) != 1 & length(lambda) != nrow(S))
+  if(!is.matrix(lambdaLasso) & length(lambdaLasso) != 1 & length(lambdaLasso) != nrow(S))
   {stop("Wrong number of elements in lambda")}
 
-  if(is.vector(lambda) && length(lambda) > 1){ lambda = matrix(sqrt(lambda))%*%sqrt(lambda)}
-  if(length(lambda) == 1){lambda = matrix(lambda,ncol=p,nrow=p)}
+  if(is.vector(lambdaLasso) && length(lambdaLasso) > 1){ lambdaLasso = matrix(sqrt(lambdaLasso))%*%sqrt(lambdaLasso)}
+  if(length(lambdaLasso) == 1){lambdaLasso = matrix(lambdaLasso,ncol=p,nrow=p)}
+
+  if(is.vector(Target) && length(Target) > 1){Target=diag(Target)}
+
+  if(!is.matrix(lambdaRidge) & length(lambdaRidge) != 1 & length(lambdaRidge) != nrow(S))
+  {stop("Wrong number of elements in lambda")}
+
+  if(is.vector(lambdaRidge) && length(lambdaRidge) > 1){ lambdaRidge = matrix(sqrt(lambdaRidge))%*%sqrt(lambdaRidge)}
+  if(length(lambdaRidge) == 1){lambdaRidge = matrix(lambdaRidge,ncol=p,nrow=p)}
 
   if(is.vector(Target) && length(Target) > 1){Target=diag(Target)}
 
@@ -62,14 +71,18 @@ gelnet <-function(S,lambda,alpha,zero=NULL,Theta=NULL,W=NULL,Target=NULL,outer.m
     for(k in 1:nrow(zero)){
       i=zero[k,1]
       j=zero[k,2]
-      lambda[i,j]=BIG
-      lambda[j,i]=BIG
+
+      lambdaLasso[i,j]=BIG
+      lambdaLasso[j,i]=BIG
+
+      lambdaRidge[i,j]=BIG
+      lambdaRidge[j,i]=BIG
     }
   }
 
 
   thr <- outer.thr; thr2 <- inner.thr
-  lambda1 <- diag(lambda)*alpha; lambda2 <- diag(lambda)*(1-alpha)
+  lambda1 <- diag(lambdaLasso)*alpha; lambda2 <- diag(lambdaRidge)*(1-alpha)
   conv <- TRUE
 
 
@@ -114,7 +127,8 @@ gelnet <-function(S,lambda,alpha,zero=NULL,Theta=NULL,W=NULL,Target=NULL,outer.m
 
   mode(p)="integer"
   mode(S)="double"
-  mode(lambda)="double"
+  mode(lambdaLasso)="double"
+  mode(lambdaRidge)="double"
   mode(alpha)="double"
   mode(Theta)="double"
   mode(W)="double"
@@ -130,7 +144,7 @@ gelnet <-function(S,lambda,alpha,zero=NULL,Theta=NULL,W=NULL,Target=NULL,outer.m
 
 
 
-  loop<-.Fortran("gelnet",p,S,lambda,alpha,Theta,W,Target,outer.maxit,thr,inner.maxit,thr2,niter,penalize.diagonal,active,dlz,PACKAGE="GLassoElnetFast")
+  loop<-.Fortran("gelnet",p,S,lambdaLasso, LambdaRidge, alpha,Theta,W,Target,outer.maxit,thr,inner.maxit,thr2,niter,penalize.diagonal,active,dlz,PACKAGE="GLassoElnetFast")
 
   # Theta <- loop$TTh; W <- loop$Wm
   # del <- loop$dlz
