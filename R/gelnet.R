@@ -144,7 +144,7 @@ gelnet <-function(S,lambdaLasso, lambdaRidge, alpha,zero=NULL,Theta=NULL,W=NULL,
 
 
 
-  loop<-.Fortran("gelnet",p,S,lambdaLasso, LambdaRidge, alpha,Theta,W,Target,outer.maxit,thr,inner.maxit,thr2,niter,penalize.diagonal,active,dlz,PACKAGE="GLassoElnetFast")
+  loop<-.Fortran("gelnet",p,S,lambdaLasso, lambdaRidge, alpha,Theta,W,Target,outer.maxit,thr,inner.maxit,thr2,niter,penalize.diagonal,active,dlz,PACKAGE="GLassoElnetFast")
 
   # Theta <- loop$TTh; W <- loop$Wm
   # del <- loop$dlz
