@@ -1,4 +1,4 @@
-subroutine gelnet(p,SS,la,al,TTh,Wm,TTar,maxit,thr,maxit2,thr2,niter,ipen,iact,dlz)
+subroutine gelnet(p,SS,lal, lar, al,TTh,Wm,TTar,maxit,thr,maxit2,thr2,niter,ipen,iact,dlz)
 !
 !  Arguments
 !  =========
@@ -9,8 +9,11 @@ subroutine gelnet(p,SS,la,al,TTh,Wm,TTar,maxit,thr,maxit2,thr2,niter,ipen,iact,d
 !  SS     (input) double precision array, dimension p x p
 !         The empirical covariance matrix
 !
-!  la     (input) double precision array, dimension p x p
-!         Regularization matrix (symmetric)
+!  lal     (input) double precision array, dimension p x p
+!         Regularization matrix for Lasso(symmetric)
+!
+!  lar     (input) double precision array, dimension p x p
+!         Regularization matrix for Ridge (symmetric)
 !
 !  al     (input) double precision
 !         Alpha (Alpha=1 for Glasso / Alpha=0 for Rope)
@@ -50,14 +53,14 @@ subroutine gelnet(p,SS,la,al,TTh,Wm,TTar,maxit,thr,maxit2,thr2,niter,ipen,iact,d
 !
       implicit double precision (a-h, o-z)
       integer :: p, maxit, maxit2, outer, i,j,k,l,m,n
-      double precision SS(p,p), TTh(p,p), Wm(p,p), TTar(p,p), la(p,p),l1(p,p),l2(p,p)
+      double precision SS(p,p), TTh(p,p), Wm(p,p), TTar(p,p), lal(p,p), lar(p,p), l1(p,p),l2(p,p)
       double precision, dimension (:), allocatable :: S,l3,l4,W,Th,Tar
       double precision al,thr,thr2,dlz
       integer, allocatable :: i2(:),i3(:)
       integer, allocatable :: i1(:,:)
       logical :: ipen,iact
-      l1=al*la
-      l2=(1-al)*la
+      l1=al*lal
+      l2=(1-al)*lar
       allocate(i1(2,p))
       allocate(i2(p))
       allocate(i3(p))
