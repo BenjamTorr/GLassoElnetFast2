@@ -151,7 +151,7 @@ gelnet <-function(S,lambdaLasso, lambdaRidge, alpha,zero=NULL,Theta=NULL,W=NULL,
 
   #if(anyNA(Theta) | anyNA(W)){ print("error"); return(); }
 
-  if(loop[[12]] == outer.maxit){ conv <- FALSE }
+  if(loop[[13]] == outer.maxit){ conv <- FALSE }
   #return(list(Theta=Theta,W=W,niter=1,del=1,conv=1))
-  return(list(Theta=loop[[5]],W=loop[[6]],niter=loop[[12]],del=loop[[15]],conv=conv))
+  return(list(Theta=loop[[6]],W=loop[[7]],niter=loop[[13]],del=loop[[16]],conv=conv))
 }
